@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logic Validity Questionnaire</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    .question { font-size: 1.1em; margin-bottom: 15px; }
+    .premise { margin-bottom: 5px; }
+    #timer { font-weight: bold; color: red; }
+    .answer-btn { padding: 10px 20px; margin: 10px 5px; font-size: 1em; }
+    #result { white-space: pre-wrap; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>Logic Validity Questionnaire</h1>
+  <div id="quiz">
+    <div id="question-container">
+      <div class="question" id="question-text"></div>
+      <div>Time remaining: <span id="timer">20</span> seconds</div>
+      <div>
+        <button class="answer-btn" onclick="submitAnswer('Valid')">Valid</button>
+        <button class="answer-btn" onclick="submitAnswer('Invalid')">Invalid</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="result" style="display:none;"></div>
+
+  <script>
+    const questions = [
+      {
+        premises: ["Premise 1: All travellers are people.", "Premise 2: All tourists are travellers."],
+        conclusion: "Conclusion: All tourists are people."
+      },
+      {
+        premises: ["Premise 1: All metals are solid.", "Premise 2: Ceramic is solid."],
+        conclusion: "Conclusion: Ceramic is a metal."
+      },
+      {
+        premises: ["Premise 1: All things that need oxygen have lungs.", "Premise 2: Fire needs oxygen."],
+        conclusion: "Conclusion: Fire has lungs."
+      },
+      {
+        premises: ["Premise 1: All trees have roots.", "Premise 2: Oaks have roots."],
+        conclusion: "Conclusion: Oaks are trees."
+      },
+      {
+        premises: ["Premise 1: All basketball players are tall.", "Premise 2: Some basketball players are men."],
+        conclusion: "Conclusion: Therefore, some men are tall."
+      },
+      {
+        premises: ["Premise 1: All flowers are red.", "Premise 2: All daisies are flowers."],
+        conclusion: "Conclusion: Therefore, all daisies are red."
+      },
+      {
+        premises: ["Premise 1: All metals conduct electricity.", "Premise 2: Iron conducts electricity."],
+        conclusion: "Conclusion: Therefore, iron is a metal."
+      },
+      {
+        premises: ["Premise 1: All cats speak French.", "Premise 2: Some French speakers have tails."],
+        conclusion: "Conclusion: Therefore, all cats have tails."
+      },
+      {
+        premises: ["Premise 1: Some aojhcojhrohgf are pgjiwprijrg.", "Premise 2: All pgjiwprijrg can 77777777."],
+        conclusion: "Conclusion: All aojhcojhrohgf can 77777777."
+      },
+      {
+        premises: ["Premise 1: All birds have feathers.", "Premise 2: All sparrows are birds."],
+        conclusion: "Conclusion: Therefore, all sparrows have feathers."
+      },
+      {
+        premises: ["Premise 1: All mammals can fly.", "Premise 2: All whales are mammals."],
+        conclusion: "Conclusion: Therefore, all whales can fly."
+      },
+      {
+        premises: ["Premise 1: All fruits are healthy.", "Premise 2: Apples are healthy."],
+        conclusion: "Conclusion: Therefore, apples are fruits."
+      },
+      {
+        premises: ["Premise 1: All dogs are fish.", "Premise 2: Some fish can bark."],
+        conclusion: "Conclusion: Therefore, all dogs can bark."
+      },
+      {
+        premises: ["Premise 1: No cats are reptiles.", "Premise 2: All tigers are cats.", "Premise 3: All reptiles are cold-blooded."],
+        conclusion: "Conclusion: Therefore, no tigers are cold-blooded."
+      },
+      {
+        premises: ["Premise 1: All teachers are educated.", "Premise 2: Some educated people read daily.", "Premise 3: All who read daily write well."],
+        conclusion: "Conclusion: Therefore, some teachers write well."
+      },
+      {
+        premises: ["Premise 1: All talking trees are philosophers.", "Premise 2: Some philosophers are invisible.", "Premise 3: All invisible beings are jellyfish."],
+        conclusion: "Conclusion: Therefore, some talking trees are jellyfish."
+      },
+      {
+        premises: ["Premise 1: All square moons are made of chocolate.", "Premise 2: Some chocolate objects are hollow.", "Premise 3: No hollow things can orbit."],
+        conclusion: "Conclusion: Therefore, all square moons cannot orbit."
+      }
+    ];
+
+    let currentQuestion = 0;
+    let answers = [];
+    let timeLeft = 20;
+    let timerInterval;
+
+    function showQuestion() {
+      if (currentQuestion >= questions.length) {
+        showResults();
+        return;
+      }
+
+      const question = questions[currentQuestion];
+      let html = "";
+      question.premises.forEach(p => html += `<div class="premise">${p}</div>`);
+      html += `<div class="premise"><strong>${question.conclusion}</strong></div>`;
+      document.getElementById("question-text").innerHTML = html;
+
+      document.getElementById("timer").textContent = "20";
+      timeLeft = 20;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          submitAnswer("(No response)");
+        }
+      }, 1000);
+    }
+
+    function submitAnswer(answer) {
+      clearInterval(timerInterval);
+      answers.push(answer);
+      currentQuestion++;
+      showQuestion();
+    }
+
+    function showResults() {
+      document.getElementById("quiz").style.display = "none";
+      const resultDiv = document.getElementById("result");
+      resultDiv.style.display = "block";
+      let output = "Responses submitted.\n\n";
+      questions.forEach((q, i) => {
+        output += q.premises.join("\n") + "\n" + q.conclusion + "\nAnswer: " + answers[i] + "\n\n";
+      });
+      resultDiv.textContent = output;
+
+      fetch('https://script.google.com/macros/s/AKfycbxPOEGCSRNXeTt_-nDh7bfkd3mYSeJHD0Sh0GVufkVP/dev', {
+        method: 'POST',
+        body: JSON.stringify(answers),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(res => res.text())
+        .then(data => console.log("Submitted:", data))
+        .catch(err => console.error("Submission error:", err));
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
