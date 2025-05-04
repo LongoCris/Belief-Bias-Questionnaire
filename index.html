@@ -4,7 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <title>Syllogism Quiz</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+function submitToGoogleSheet() {
+  fetch("https://script.google.com/macros/s/AKfycbxjU1AzvfoaZNeV9OwYsspFMhj-m3frDxZjRr3uR_C_oLq_nmlhYTDiFjz6PkcNcEXO/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      firstName: nome,
+      lastName: cognome,
+      answers: answers
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }).then(res => console.log("Submitted:", res.status));
+}
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <style>
