@@ -96,11 +96,21 @@
 <div id="start-form">
 <h2>Welcome!</h2>
 <p id="instruction">
-      You are asked to answer logically correct by choosing whether the conclusion is
-      <strong>Valid</strong> or <strong>Invalid</strong> regardless of the context of the question.
-    </p>
+  You have 20 seconds per question and you are asked to answer logically correct by choosing whether the conclusion is,
+  <strong>Valid</strong> or <strong>Invalid</strong> regardless of the context of the question.<br/>
+  At the end there will be an open ended question without time.
+</p>
 <label>First Name: <input id="nome" type="text"/></label>
 <label>Last Name: <input id="cognome" type="text"/></label>
+
+<div style="margin: 20px 0; padding: 15px; background-color: #eef; border-radius: 10px;">
+  <strong>Example:</strong><br>
+  Premise 1: All A are B.<br>
+  Premise 2: All B are C.<br>
+  Conclusion: Therefore, all A are C.<br>
+  <em>The Conclusion is <strong>valid</strong>.</em>
+</div>
+
 <div style="text-align: center;"><button onclick="startQuiz()">Start Quiz</button></div>
 </div>
 <div class="hidden" id="quiz-container">
@@ -122,12 +132,11 @@
 </div>
 <canvas height="300" id="chartCanvas" width="400"></canvas>
 <script>
-    const rawQuestions = [
-      { id: 1, p1: "All travellers are people.", p2: "All tourists are travellers.", conclusion: "All tourists are people", correct: "Valid", believable: "Believable", open: false },
+    const rawQuestions = [{ id: 1, p1: "All travellers are people.", p2: "All tourists are travellers.", conclusion: "All tourists are people", correct: "Valid", believable: "Believable", open: false },
       { id: 2, p1: "All metals are solid", p2: "Ceramic is solid", conclusion: "Ceramic is a metal", correct: "Invalid", believable: "Unbelievable", open: false },
       { id: 3, p1: "All things that need oxygen have lungs.", p2: "Fire needs oxygen.", conclusion: "Fire has lungs", correct: "Valid", believable: "Unbelievable", open: false },
       { id: 4, p1: "All trees have roots.", p2: "Oaks have roots", conclusion: "Oaks are trees.", correct: "Invalid", believable: "Believable", open: false },
-      { id: 5, p1: "All basketball players are tall", p2: "Some basketball player are men", conclusion: "Therefore, some men are tall", correct: "Invalid", believable: "Believable", open: false },
+      { id: 5, p1: "All basketball players are tall", p2: "Some basketball player are men", conclusion: "Therefore, some men are tall", correct: "Valid", believable: "Believable", open: false },
       { id: 6, p1: "All flowers are red", p2: "All daisies are flowers", conclusion: "Therefore, all daisies are red", correct: "Valid", believable: "Unbelievable", open: false },
       { id: 7, p1: "All metals conduct electricity", p2: "Iron conduct electricity", conclusion: "Therefore, Iron is a metal", correct: "Invalid", believable: "Believable", open: false },
       { id: 8, p1: "All cats speak French", p2: "Some French speakers have tails", conclusion: "Therefore, all cats have tails", correct: "Invalid", believable: "Unbelievable", open: false },
@@ -138,15 +147,17 @@
       { id: 13, p1: "No cats are reptiles.", p2: "All tigers are cats.", p3: "All reptiles are cold-blooded.", conclusion: "Therefore, no tigers are cold-blooded.", correct: "Valid", believable: "Believable", open: false },
       { id: 14, p1: "All teachers are educated.", p2: "Some educated people read daily.", p3: "All who read daily write well.", conclusion: "Therefore, some teachers write well.", correct: "Invalid", believable: "Believable", open: true },
       { id: 15, p1: "All talking trees are philosophers.", p2: "Some philosophers are invisible.", p3: "All invisible beings are jellyfish.", conclusion: "Therefore, some talking trees are jellyfish.", correct: "Valid", believable: "Unbelievable", open: false },
-      { id: 16, p1: "All square moons are made of chocolate.", p2: "Some chocolate objects are hollow.", p3: "No hollow things can orbit.", conclusion: "Therefore, all square moons cannot orbit.", correct: "Invalid", believable: "Unbelievable", open: false }
-    ];
+      { id: 16, p1: "All square moons are made of chocolate.", p2: "Some chocolate objects are hollow.", p3: "No hollow things can orbit.", conclusion: "Therefore, all square moons cannot orbit.", correct: "Invalid", believable: "Unbelievable", open: false },
 
-    let nome = "", cognome = "", questions = [], currentIndex = 0, answers = [], timer, timeLeft = 20;
+      { id: 17, p1: "All dogs are fish.", p2: "Some fish can bark.", conclusion: "Therefore, all dogs can bark.", correct: "Invalid", believable: "Unbelievable", open: false },
+];
+
+    let nome = "", cognome = "", questions = [], currentIndex = 0, answers = [], timer, timeLeft = 20, startTime = 0;
 
     function startQuiz() {
       nome = document.getElementById("nome").value.trim();
       cognome = document.getElementById("cognome").value.trim();
-      if (!nome || !cognome) return alert("Inserisci nome e cognome!");
+      if (!nome || !cognome) return alert("Please enter your first and last name!");
       const openQuestion = rawQuestions.find(q => q.open);
       const closedQuestions = rawQuestions.filter(q => !q.open);
       questions = shuffleArray(closedQuestions).concat(openQuestion);
@@ -159,6 +170,7 @@
 
 
 function showQuestion() {
+  startTime = Date.now();
   const q = questions[currentIndex];
   const isOpen = q.open;
 
@@ -170,7 +182,7 @@ function showQuestion() {
     <strong>Conclusion:</strong> ${q.conclusion}
   `;
 
-  document.getElementById("question-text").innerHTML = isOpen ? premises : (closedIntro + premises);
+  document.getElementById("question-text").innerHTML = premises;
 
   document.getElementById("open-question").classList.toggle("hidden", !isOpen);
   document.getElementById("response-buttons").classList.toggle("hidden", isOpen);
@@ -193,13 +205,15 @@ function startTimer() {
 
     function submitAnswer(response) {
       clearInterval(timer);
-      answers.push({ ...questions[currentIndex], response });
+      const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
+      answers.push({ ...questions[currentIndex], response, responseTime });
       nextQuestion();
     }
 
     function submitOpenAnswer() {
       const response = document.getElementById("open-answer").value.trim() || "Nessuna risposta";
-      answers.push({ ...questions[currentIndex], response });
+      const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
+      answers.push({ ...questions[currentIndex], response, responseTime });
       nextQuestion();
     }
 
@@ -234,12 +248,13 @@ function generatePDF() {
     doc.setFontSize(12); doc.setTextColor(0, 0, 0);
     doc.line(10, y, 200, y); y += 4;
     doc.setFont(undefined, 'bold');
-    doc.text(`Question ${i + 1}${q.open ? " (open)" : " (closed)"}`, 10, y); y += 6;
+    doc.text(`Question ${i + 1}${q.training ? " (training)" : (q.open ? " (open)" : " (closed)")}`, 10, y); y += 6;
     doc.setFont(undefined, 'normal');
     doc.text(`Premise 1: ${q.p1}`, 10, y); y += 6;
     doc.text(`Premise 2: ${q.p2}`, 10, y); y += 6;
     doc.text(`Conclusion: ${q.conclusion}`, 10, y); y += 6;
     doc.text(`User answer: ${q.response}`, 10, y); y += 6;
+    doc.text(`Response time: ${q.responseTime}s`, 10, y); y += 6;
 
     if (!q.open) {
       doc.text(`Type: ${q.correct} (${q.believable})`, 10, y); y += 6;
