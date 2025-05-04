@@ -5,20 +5,6 @@
 <meta charset="utf-8"/>
 <title>Syllogism Quiz</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-function submitToGoogleSheet() {
-  fetch("https://script.google.com/macros/s/AKfycbxjU1AzvfoaZNeV9OwYsspFMhj-m3frDxZjRr3uR_C_oLq_nmlhYTDiFjz6PkcNcEXO/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      firstName: nome,
-      lastName: cognome,
-      answers: answers
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  }).then(res => console.log("Submitted:", res.status));
-}
-
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
@@ -236,7 +222,8 @@ function startTimer() {
       currentIndex++;
       if (currentIndex < questions.length) showQuestion();
       else {
-        document.getElementById("quiz-container").classList.add("hidden");
+        submitToGoogleSheet();
+  document.getElementById("quiz-container").classList.add("hidden");
         document.getElementById("end-screen").classList.remove("hidden");
       }
     }
@@ -283,13 +270,15 @@ function generatePDF() {
         doc.text("Logic error: answer differs from correct one", 10, y); y += 6;
         doc.setTextColor(0, 0, 0);
       } else {
-        noAnswerCount++;
+        submitToGoogleSheet();
+  noAnswerCount++;
         doc.setTextColor(200, 0, 0);
         doc.text("No valid answer provided", 10, y); y += 6;
         doc.setTextColor(0, 0, 0);
       }
     } else {
-      const resp = q.response.toLowerCase();
+      submitToGoogleSheet();
+  const resp = q.response.toLowerCase();
       const logic = resp.includes("invalid") ? "Invalid" : (resp.includes("valid") ? "Valid" : null);
       doc.text(`Type: ${q.correct} (${q.believable})`, 10, y); y += 6;
       if (logic) {
@@ -357,5 +346,22 @@ function generatePDF() {
 }
 
 </script>
+
+<script>
+function submitToGoogleSheet() {
+  fetch("https://script.google.com/macros/s/AKfycbygLqHHO2LHoNjkVumpwKsX7bY9rhdZ3fdKjW_7-QaKaASTxMjqIPP8CJtpDA2vydTM/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      firstName: nome,
+      lastName: cognome,
+      answers: answers
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }).then(res => res.text()).then(console.log).catch(console.error);
+}
+</script>
+
 </body>
 </html>
