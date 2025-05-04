@@ -1,163 +1,319 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Logic Validity Questionnaire</title>
+  <meta charset="UTF-8">
+  <title>Syllogism Quiz</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    .question { font-size: 1.1em; margin-bottom: 15px; }
-    .premise { margin-bottom: 5px; }
-    #timer { font-weight: bold; color: red; }
-    .answer-btn { padding: 10px 20px; margin: 10px 5px; font-size: 1em; }
-    #result { white-space: pre-wrap; margin-top: 20px; }
+    body {
+      font-family: 'Inter', sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h2, h3 {
+      text-align: center;
+      color: #222;
+    }
+    .hidden { display: none; }
+    .question {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin: 20px 0;
+    }
+    #timer {
+      font-weight: 600;
+      color: #fff;
+      background: #e53935;
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    input[type="text"] {
+  padding: 8px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+    textarea {
+  padding: 10px;
+  width: 100%;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+    button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px 5px 0 0;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+    button:hover {
+      background-color: #45a049;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    #start-form, #end-screen {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      margin-top: 40px;
+    }
+    #chartCanvas {
+  display: none !important;
+  visibility: hidden;
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+}
   </style>
 </head>
 <body>
+  <div id="start-form">
+    <p id="form-error" style="color: red; font-weight: bold;"></p>
+    <h2>Welcome!</h2>
+    <label>First Name: <input type="text" id="nome"></label>
+    <label>Last Name: <input type="text" id="cognome"></label>
+    <div style="text-align: center;"><button onclick="startQuiz()">Start Quiz</button></div>
+  </div>
 
-  <h1>Logic Validity Questionnaire</h1>
-  <div id="quiz">
-    <div id="question-container">
-      <div class="question" id="question-text"></div>
-      <div>Time remaining: <span id="timer">20</span> seconds</div>
-      <div>
-        <button class="answer-btn" onclick="submitAnswer('Valid')">Valid</button>
-        <button class="answer-btn" onclick="submitAnswer('Invalid')">Invalid</button>
-      </div>
+  <div id="quiz-container" class="hidden">
+    <div id="timer"></div>
+    <div class="question" id="question-text"></div>
+    <div id="response-buttons" class="hidden">
+      <button onclick="submitAnswer('Valid')">Valid</button>
+      <button onclick="submitAnswer('Invalid')">Invalid</button>
+    </div>
+    <div id="open-question" class="hidden">
+      <p>Explain why you think the conclusion is valid or invalid:</p>
+      <textarea id="open-answer" rows="4"></textarea><br>
+      <button onclick="submitOpenAnswer()">Submit Answer</button>
     </div>
   </div>
 
-  <div id="result" style="display:none;"></div>
+  <div id="end-screen" class="hidden" style="text-align: center">
+  <h3>Thank you for completing the quiz!</h3>
+  <button onclick="generatePDF()">Download PDF</button>
+</div>
+
+  <canvas id="chartCanvas" width="400" height="300"></canvas>
 
   <script>
-    const questions = [
-      {
-        premises: ["Premise 1: All travellers are people.", "Premise 2: All tourists are travellers."],
-        conclusion: "Conclusion: All tourists are people."
-      },
-      {
-        premises: ["Premise 1: All metals are solid.", "Premise 2: Ceramic is solid."],
-        conclusion: "Conclusion: Ceramic is a metal."
-      },
-      {
-        premises: ["Premise 1: All things that need oxygen have lungs.", "Premise 2: Fire needs oxygen."],
-        conclusion: "Conclusion: Fire has lungs."
-      },
-      {
-        premises: ["Premise 1: All trees have roots.", "Premise 2: Oaks have roots."],
-        conclusion: "Conclusion: Oaks are trees."
-      },
-      {
-        premises: ["Premise 1: All basketball players are tall.", "Premise 2: Some basketball players are men."],
-        conclusion: "Conclusion: Therefore, some men are tall."
-      },
-      {
-        premises: ["Premise 1: All flowers are red.", "Premise 2: All daisies are flowers."],
-        conclusion: "Conclusion: Therefore, all daisies are red."
-      },
-      {
-        premises: ["Premise 1: All metals conduct electricity.", "Premise 2: Iron conducts electricity."],
-        conclusion: "Conclusion: Therefore, iron is a metal."
-      },
-      {
-        premises: ["Premise 1: All cats speak French.", "Premise 2: Some French speakers have tails."],
-        conclusion: "Conclusion: Therefore, all cats have tails."
-      },
-      {
-        premises: ["Premise 1: Some aojhcojhrohgf are pgjiwprijrg.", "Premise 2: All pgjiwprijrg can 77777777."],
-        conclusion: "Conclusion: All aojhcojhrohgf can 77777777."
-      },
-      {
-        premises: ["Premise 1: All birds have feathers.", "Premise 2: All sparrows are birds."],
-        conclusion: "Conclusion: Therefore, all sparrows have feathers."
-      },
-      {
-        premises: ["Premise 1: All mammals can fly.", "Premise 2: All whales are mammals."],
-        conclusion: "Conclusion: Therefore, all whales can fly."
-      },
-      {
-        premises: ["Premise 1: All fruits are healthy.", "Premise 2: Apples are healthy."],
-        conclusion: "Conclusion: Therefore, apples are fruits."
-      },
-      {
-        premises: ["Premise 1: All dogs are fish.", "Premise 2: Some fish can bark."],
-        conclusion: "Conclusion: Therefore, all dogs can bark."
-      },
-      {
-        premises: ["Premise 1: No cats are reptiles.", "Premise 2: All tigers are cats.", "Premise 3: All reptiles are cold-blooded."],
-        conclusion: "Conclusion: Therefore, no tigers are cold-blooded."
-      },
-      {
-        premises: ["Premise 1: All teachers are educated.", "Premise 2: Some educated people read daily.", "Premise 3: All who read daily write well."],
-        conclusion: "Conclusion: Therefore, some teachers write well."
-      },
-      {
-        premises: ["Premise 1: All talking trees are philosophers.", "Premise 2: Some philosophers are invisible.", "Premise 3: All invisible beings are jellyfish."],
-        conclusion: "Conclusion: Therefore, some talking trees are jellyfish."
-      },
-      {
-        premises: ["Premise 1: All square moons are made of chocolate.", "Premise 2: Some chocolate objects are hollow.", "Premise 3: No hollow things can orbit."],
-        conclusion: "Conclusion: Therefore, all square moons cannot orbit."
-      }
+    const rawQuestions = [
+      { id: 1, p1: "All travellers are people.", p2: "All tourists are travellers.", conclusion: "All tourists are people", correct: "Valid", believable: "Believable", open: false },
+      { id: 2, p1: "All metals are solid", p2: "Ceramic is solid", conclusion: "Ceramic is a metal", correct: "Invalid", believable: "Unbelievable", open: false },
+      { id: 3, p1: "All things that need oxygen have lungs.", p2: "Fire needs oxygen.", conclusion: "Fire has lungs", correct: "Valid", believable: "Unbelievable", open: false },
+      { id: 4, p1: "All trees have roots.", p2: "Oaks have roots", conclusion: "Oaks are trees.", correct: "Invalid", believable: "Believable", open: false },
+      { id: 5, p1: "All basketball players are tall", p2: "Some basketball player are men", conclusion: "Therefore, some men are tall", correct: "Invalid", believable: "Believable", open: false },
+      { id: 6, p1: "All flowers are red", p2: "All daisies are flowers", conclusion: "Therefore, all daisies are red", correct: "Valid", believable: "Unbelievable", open: false },
+      { id: 7, p1: "All metals conduct electricity", p2: "Iron conduct electricity", conclusion: "Therefore, Iron is a metal", correct: "Invalid", believable: "Believable", open: false },
+      { id: 8, p1: "All cats speak French", p2: "Some French speakers have tails", conclusion: "Therefore, all cats have tails", correct: "Invalid", believable: "Unbelievable", open: false },
+      { id: 9, p1: "Some aojhcojhrohgf are pgjiwprijrg", p2: "All pgjiwprijrg can 77777777", conclusion: "All aojhcojhrohgf can 77777777", correct: "Invalid", believable: "Believable", open: false },
+      { id: 10, p1: "All birds have feathers.", p2: "All sparrows are birds.", conclusion: "Therefore, all sparrows have feathers.", correct: "Valid", believable: "Believable", open: false },
+      { id: 11, p1: "All mammals can fly.", p2: "All whales are mammals.", conclusion: "Therefore, all whales can fly.", correct: "Valid", believable: "Unbelievable", open: false },
+      { id: 12, p1: "All fruits are healthy.", p2: "Apples are healthy.", conclusion: "Therefore, apples are fruits.", correct: "Invalid", believable: "Believable", open: false },
+      { id: 13, p1: "All dogs are fish.", p2: "Some fish can bark.", conclusion: "Therefore, all dogs can bark.", correct: "Invalid", believable: "Unbelievable", open: false },
+      { id: 14, p1: "No cats are reptiles.", p2: "All tigers are cats.", conclusion: "Therefore, no tigers are cold-blooded.", correct: "Valid", believable: "Believable", open: false },
+      { id: 15, p1: "All teachers are educated.", p2: "Some educated people read daily.", conclusion: "Therefore, some teachers write well.", correct: "Invalid", believable: "Believable", open: true },
+      { id: 16, p1: "All talking trees are philosophers.", p2: "Some philosophers are invisible.", conclusion: "Therefore, some talking trees are jellyfish.", correct: "Valid", believable: "Unbelievable", open: false }
     ];
 
-    let currentQuestion = 0;
-    let answers = [];
-    let timeLeft = 20;
-    let timerInterval;
+    let nome = "", cognome = "", questions = [], currentIndex = 0, answers = [], timer, timeLeft = 20;
 
-    function showQuestion() {
-      if (currentQuestion >= questions.length) {
-        showResults();
-        return;
+function startQuiz() {
+  nome = document.getElementById("nome").value.trim();
+  cognome = document.getElementById("cognome").value.trim();
+  if (!nome || !cognome) {
+    document.getElementById("form-error").textContent = "Please enter your first and last name.";
+    return;
+  }
+  document.getElementById("form-error").textContent = "";
+  const openQuestion = rawQuestions.find(q => q.open);
+  const closedQuestions = rawQuestions.filter(q => !q.open);
+  questions = shuffleArray(closedQuestions).concat(openQuestion);
+  document.getElementById("start-form").classList.add("hidden");
+  document.getElementById("quiz-container").classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentIndex];
+  document.getElementById("question-text").innerHTML = `
+    <strong>Premise 1:</strong> ${q.p1}<br>
+    <strong>Premise 2:</strong> ${q.p2}<br>
+    <strong>Conclusion:</strong> ${q.conclusion}
+  `;
+  document.getElementById("open-question").classList.toggle("hidden", !q.open);
+  document.getElementById("response-buttons").classList.toggle("hidden", q.open);
+  document.getElementById("timer").classList.toggle("hidden", q.open);
+  if (!q.open) startTimer();
+}
+
+function startTimer() {
+  timeLeft = 20;
+  document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = `Time left: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      submitAnswer("No answer");
+    }
+  }, 1000);
+}
+
+function submitAnswer(response) {
+  clearInterval(timer);
+  answers.push({ ...questions[currentIndex], response });
+  nextQuestion();
+}
+
+function submitOpenAnswer() {
+  const response = document.getElementById("open-answer").value.trim() || "Nessuna risposta";
+  answers.push({ ...questions[currentIndex], response });
+  nextQuestion();
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < questions.length) showQuestion();
+  else {
+    document.getElementById("quiz-container").classList.add("hidden");
+    document.getElementById("end-screen").classList.remove("hidden");
+  }
+}
+
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text(`Responses of ${nome} ${cognome}`, 10, 15);
+  let y = 25;
+
+  let correctCount = 0, incorrectCount = 0, noAnswerCount = 0;
+  let openQuestionStatus = "Not evaluable";
+  let believableCorrect = 0, believableWrong = 0, unbelievableCorrect = 0, unbelievableWrong = 0;
+
+  answers.forEach((q, i) => {
+    const lines = 9 + (q.open ? 2 : 0) + ((q.response !== q.correct) ? 1 : 0);
+    if (y + lines * 6 > 280) { doc.addPage(); y = 20; }
+    doc.setFontSize(12); doc.setTextColor(0, 0, 0);
+    doc.line(10, y, 200, y); y += 4;
+    doc.setFont(undefined, 'bold');
+    doc.text(`Question ${i + 1}${q.open ? " (open)" : " (closed)"}`, 10, y); y += 6;
+    doc.setFont(undefined, 'normal');
+    doc.text(`Premise 1: ${q.p1}`, 10, y); y += 6;
+    doc.text(`Premise 2: ${q.p2}`, 10, y); y += 6;
+    doc.text(`Conclusion: ${q.conclusion}`, 10, y); y += 6;
+    doc.text(`User answer: ${q.response}`, 10, y); y += 6;
+
+    if (!q.open) {
+      doc.text(`Type: ${q.correct} (${q.believable})`, 10, y); y += 6;
+      if (q.response === q.correct) {
+        correctCount++;
+        q.believable === "Believable" ? believableCorrect++ : unbelievableCorrect++;
+      } else if (["Valid", "Invalid"].includes(q.response)) {
+        incorrectCount++;
+        q.believable === "Believable" ? believableWrong++ : unbelievableWrong++;
+        doc.setTextColor(200, 0, 0);
+        doc.text("Logic error: answer differs from correct one", 10, y); y += 6;
+        doc.setTextColor(0, 0, 0);
+      } else {
+        noAnswerCount++;
+        doc.setTextColor(200, 0, 0);
+        doc.text("No valid answer provided", 10, y); y += 6;
+        doc.setTextColor(0, 0, 0);
       }
-
-      const question = questions[currentQuestion];
-      let html = "";
-      question.premises.forEach(p => html += `<div class="premise">${p}</div>`);
-      html += `<div class="premise"><strong>${question.conclusion}</strong></div>`;
-      document.getElementById("question-text").innerHTML = html;
-
-      document.getElementById("timer").textContent = "20";
-      timeLeft = 20;
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").textContent = timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          submitAnswer("(No response)");
+    } else {
+      const resp = q.response.toLowerCase();
+      const logic = resp.includes("invalid") ? "Invalid" : (resp.includes("valid") ? "Valid" : null);
+      doc.text(`Type: ${q.correct} (${q.believable})`, 10, y); y += 6;
+      if (logic) {
+        doc.text(`Detected logical answer: ${logic}`, 10, y); y += 6;
+        openQuestionStatus = (logic === q.correct) ? "Correct" : "Incorrect";
+        if (logic !== q.correct) {
+          doc.setTextColor(200, 0, 0);
+          doc.text("Logic error: answer differs from correct one", 10, y); y += 6;
+          doc.setTextColor(0, 0, 0);
         }
-      }, 1000);
+      }
     }
+    y += 6;
+  });
 
-    function submitAnswer(answer) {
-      clearInterval(timerInterval);
-      answers.push(answer);
-      currentQuestion++;
-      showQuestion();
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text("Quiz Statistics", 10, 20);
+  const totalClosed = answers.filter(q => !q.open).length;
+  const pct = ((correctCount / totalClosed) * 100).toFixed(1);
+  const stats = [
+    `Total questions: ${answers.length}`,
+    `- Correct closed questions: ${correctCount}`,
+    `- Incorrect closed questions: ${incorrectCount}`,
+    `- Closed questions with no answer: ${noAnswerCount}`,
+    `Accuracy percentage: ${pct}%`,
+    `Open question result: ${openQuestionStatus}`,
+    "",
+    `Belief Bias Analysis:`,
+    `- Believable correct: ${believableCorrect}`,
+    `- Believable wrong: ${believableWrong}`,
+    `- Unbelievable correct: ${unbelievableCorrect}`,
+    `- Unbelievable wrong: ${unbelievableWrong}`
+  ];
+  let sy = 30;
+  stats.forEach(line => { doc.text(line, 10, sy); sy += 8; });
+
+  const ctx = document.getElementById("chartCanvas").getContext("2d");
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ["Believable Correct", "Believable Wrong", "Unbelievable Correct", "Unbelievable Wrong"],
+      datasets: [{
+        label: "Answers",
+        data: [believableCorrect, believableWrong, unbelievableCorrect, unbelievableWrong],
+        backgroundColor: ["#66bb6a", "#ef5350", "#66bb6a", "#ef5350"]
+      }]
+    },
+    options: {
+      responsive: false,
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
     }
+  });
 
-    function showResults() {
-      document.getElementById("quiz").style.display = "none";
-      const resultDiv = document.getElementById("result");
-      resultDiv.style.display = "block";
-      let output = "Responses submitted.\n\n";
-      questions.forEach((q, i) => {
-        output += q.premises.join("\n") + "\n" + q.conclusion + "\nAnswer: " + answers[i] + "\n\n";
-      });
-      resultDiv.textContent = output;
+  setTimeout(() => {
+    const img = document.getElementById("chartCanvas").toDataURL("image/png");
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text("Chart: Belief Bias Analysis", 10, 20);
+    doc.addImage(img, "PNG", 10, 30, 180, 130);
+    doc.save(`${nome}_${cognome}_quiz.pdf`);
+  }, 500);
+}
 
-      fetch('https://script.google.com/macros/s/AKfycbxo5B9R8mAyXZFOUPNq2M_xhbXuMgfTe3r4BAC9GxIU7iTGBbcU9IBGDoErqd4I34EVfA/exec', {
-        method: 'POST',
-        body: JSON.stringify(answers),
-        headers: { 'Content-Type': 'application/json' }
-      }).then(res => res.text())
-        .then(data => console.log("Submitted:", data))
-        .catch(err => console.error("Submission error:", err));
-    }
-
-    showQuestion();
-  </script>
+function shuffleArray(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+    // include: startQuiz, showQuestion, startTimer, submitAnswer, submitOpenAnswer, nextQuestion, generatePDF (con Chart.js)
+</script>
 </body>
 </html>
