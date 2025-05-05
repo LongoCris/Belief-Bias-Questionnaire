@@ -253,7 +253,9 @@ function generatePDF() {
     doc.text(`Premise 1: ${q.p1}`, 10, y); y += 6;
     doc.text(`Premise 2: ${q.p2}`, 10, y); y += 6;
     doc.text(`Conclusion: ${q.conclusion}`, 10, y); y += 6;
-    doc.text(`User answer: ${q.response}`, 10, y); y += 6;
+    const wrappedText = doc.splitTextToSize(`User answer: ${q.response}`, 180);
+doc.text(wrappedText, 10, y);
+y += wrappedText.length * 6;
     doc.text(`Response time: ${q.responseTime}s`, 10, y); y += 6;
 
     if (!q.open) {
