@@ -22,6 +22,7 @@ An interactive web-based quiz designed to assess logical reasoning and belief bi
 1. Clone this repository or download the source code.
 2. Open `index.html` in any modern web browser.
 3. Enter your name and start the quiz!
+4. You can also try the quiz by clicking [HERE](https://longocris.github.io/Belief-Bias-Questionnaire/)
 
 ## Example Question
 
