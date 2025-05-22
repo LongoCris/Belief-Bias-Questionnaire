@@ -1,7 +1,7 @@
 
 # Syllogism Quiz
 
-An interactive web-based quiz designed to assess logical reasoning and belief bias through syllogistic questions. This tool presents users with a series of logic-based questions requiring them to evaluate the validity of conclusions based on given premises.
+An interactive web-based quiz designed to assess logical reasoning and belief bias through syllogistic questions adopted in [llm-belief-bias](https://github.com/SergioV3005/llm-belief-bias) project. This tool presents users with a series of logic-based questions requiring them to evaluate the validity of conclusions based on given premises.
 
 ## Features
 
